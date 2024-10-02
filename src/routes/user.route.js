@@ -29,5 +29,5 @@ userRouter
   .patch(verifyJwt, upload.single("avatar"), updateUserAvatar);
 userRouter.route("/forgot-password").post(forgotPassword);
 userRouter.route("/get-other-user/:userId").get(getOtherUser);
-userRouter.route("/reset-password/:resetToken").post(resetPassword);
+userRouter.route("/reset-password").post(resetPassword);
 export default userRouter;

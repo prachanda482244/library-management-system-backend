@@ -55,9 +55,70 @@ const addBook = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, book, "Book added successfully"));
 });
 
-const getAllBooks = asyncHandler(async (req, res) => {
-  const book = await Book.find().populate("borrowedBy").sort({ createdAt: -1 });
-  if (!book) throw new ApiError(404, "Books not found");
+const getAllBooks = asyncHandler(async (_, res) => {
+  const book = await Book.aggregate([
+    {
+      $addFields: {
+        isBookBorrowedBy: {
+          $ne: ["$borrowedBy", null],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "borrowedBy",
+        foreignField: "_id",
+        as: "borrowedUserDetails",
+        pipeline: [
+          {
+            $project: {
+              borrowedBooks: 0,
+              password: 0,
+              resetPasswordToken: 0,
+              resetPasswordExpires: 0,
+              updatedAt: 0,
+              refreshToken: 0,
+              __v: 0,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unwind: {
+        path: "$borrowedUserDetails",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        author: 1,
+        genre: 1,
+        publicationYear: 1,
+        isbn: 1,
+        availability: 1,
+        coverImage: 1,
+        borrowedAt: 1,
+        dueDate: 1,
+        createdAt: 1,
+        borrowedUserDetails: {
+          $cond: {
+            if: {
+              $eq: ["$isBookBorrowedBy", false],
+            },
+            then: null,
+            else: "$borrowedUserDetails",
+          },
+        },
+      },
+    },
+  ]).sort({ createdAt: -1 });
+
+  if (!book)
+    return res.status(200).json(new ApiResponse(200, [], "No book found"));
   res.status(200).json(new ApiResponse(200, book, "Book details"));
 });
 
