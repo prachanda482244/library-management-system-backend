@@ -1,4 +1,4 @@
-import { isObjectIdOrHexString } from "mongoose";
+import mongoose, { isObjectIdOrHexString } from "mongoose";
 import { Book } from "../model/book.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -63,27 +63,88 @@ const getAllBooks = asyncHandler(async (req, res) => {
 
 const getSingleBook = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
-  const book = await Book.findById(bookId).populate({
-    path: "borrowedBy",
-    select:
-      "-password -borrowedBooks -resetPasswordToken -resetPasswordExpires",
-  });
 
-  if (!book) throw new ApiError(404, "Book not found");
-  res.status(200).json(new ApiResponse(200, book, "Single book detail"));
+  const book = await Book.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(bookId),
+      },
+    },
+    {
+      $addFields: {
+        hasBorrower: { $ne: ["$borrowedBy", null] },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        foreignField: "_id",
+        localField: "borrowedBy",
+        as: "borrowedUserDetails",
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              username: 1,
+              email: 1,
+              avatar: 1,
+              role: 1,
+              fines: 1,
+              createdAt: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unwind: {
+        path: "$borrowedUserDetails",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        author: 1,
+        description: 1,
+        genre: 1,
+        publicationYear: 1,
+        isbn: 1,
+        availability: 1,
+        coverImage: 1,
+        borrowedAt: 1,
+        dueDate: 1,
+        createdAt: 1,
+        borrowedUserDetails: {
+          $cond: {
+            if: { $eq: ["$hasBorrower", false] },
+            then: null,
+            else: "$borrowedUserDetails",
+          },
+        },
+      },
+    },
+    {
+      $project: { hasBorrower: 0 },
+    },
+  ]);
+
+  if (!book)
+    return res.status(200).json(new ApiResponse(200, [], "book not found"));
+  res.status(200).json(new ApiResponse(200, book[0], "Single book detail"));
 });
 const updateBookDetail = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
-  const { title, author, genre, publicationYear } = req.body;
+  const { title, author, genre, publicationYear, description } = req.body;
   const existingBook = await Book.findById(bookId);
   if (!existingBook) throw new ApiError(404, "Book not found");
 
   const updateBook = await Book.findByIdAndUpdate(
     bookId,
-    { $set: { title, author, genre, publicationYear } },
+    { $set: { title, author, genre, publicationYear, description } },
     { new: true }
   );
-
   if (!updateBook) throw new ApiError(400, "Failed to update the book");
   res
     .status(200)
