@@ -35,10 +35,16 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: true,
-    },
+    },  
     refreshToken: {
       type: String,
     },
+    orderHistory: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Order",
+      },
+    ],
     resetPasswordToken: {
       type: String,
       default: null,

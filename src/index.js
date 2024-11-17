@@ -17,6 +17,8 @@ import chatRouter from "./routes/chat.route.js";
 import chatMessageRouter from "./routes/chatmessage.route.js";
 import recommendRouter from "./routes/recommended.route.js";
 import reviewRouter from "./routes/review.route.js";
+import cartRouter from "./routes/cart.route.js";
+import orderRouter from "./routes/order.route.js";
 
 const app = express();
 connectToDb();
@@ -46,6 +48,10 @@ app.use("/api/v1/recommendation", recommendRouter);
 // chat Router
 app.use("/api/v1/chats", chatRouter);
 app.use("/api/v1/chat/messages", chatMessageRouter);
+
+
+app.use("/api/v1/cart", cartRouter);
+app.use("/api/v1/order", orderRouter);
 
 const httpServer = createServer(app);
 

@@ -9,10 +9,10 @@ import { emitSocketEvent } from "../socket/socket.js";
 import { ChatEventEnum } from "../config/constants.js";
 
 const addBook = asyncHandler(async (req, res) => {
-  const { title, author, genre, publicationYear, isbn, description } = req.body;
+  const { title, author, genre, publicationYear, isbn, description,price } = req.body;
 
   if (
-    [title, author, genre, publicationYear, isbn, description].some(
+    [title, author, genre, publicationYear, isbn, description,price].some(
       (field) => field?.trim() === ""
     )
   ) {
@@ -34,6 +34,7 @@ const addBook = asyncHandler(async (req, res) => {
     publicationYear,
     isbn,
     description,
+    price,
     coverImage: bookAvatar.url,
   });
 
@@ -102,6 +103,8 @@ const getAllBooks = asyncHandler(async (_, res) => {
         availability: 1,
         coverImage: 1,
         borrowedAt: 1,
+        price:1,
+        borrowApprovalStatus:1,
         dueDate: 1,
         createdAt: 1,
         borrowedUserDetails: {
@@ -170,6 +173,7 @@ const getSingleBook = asyncHandler(async (req, res) => {
         author: 1,
         description: 1,
         genre: 1,
+        price:1,
         publicationYear: 1,
         isbn: 1,
         availability: 1,
@@ -177,6 +181,7 @@ const getSingleBook = asyncHandler(async (req, res) => {
         borrowedAt: 1,
         dueDate: 1,
         createdAt: 1,
+        borrowApprovalStatus:1,
         borrowedUserDetails: {
           $cond: {
             if: { $eq: ["$hasBorrower", false] },
@@ -197,13 +202,13 @@ const getSingleBook = asyncHandler(async (req, res) => {
 });
 const updateBookDetail = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
-  const { title, author, genre, publicationYear, description } = req.body;
+  const { title, author, genre, publicationYear, description,price } = req.body;
   const existingBook = await Book.findById(bookId);
   if (!existingBook) throw new ApiError(404, "Book not found");
 
   const updateBook = await Book.findByIdAndUpdate(
     bookId,
-    { $set: { title, author, genre, publicationYear, description } },
+    { $set: { title, author, genre, publicationYear, description,price } },
     { new: true }
   );
   if (!updateBook) throw new ApiError(400, "Failed to update the book");

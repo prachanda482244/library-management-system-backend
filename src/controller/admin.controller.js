@@ -102,6 +102,17 @@ const getStatistics = asyncHandler(async (req, res) => {
   );
 });
 
+const getRequestApproval =asyncHandler(async(req,res)=>{
+  const {bookId,status} = req.body
+
+   const book = await Book.findById(bookId)
+ if(!book) return res.status(200).json(new ApiResponse(200,{},"No book found"))
+  book.borrowApprovalStatus=status
+book.save()
+return res.status(200).json(new ApiResponse(200,book,`Book status updated to ${status}`))
+
+})
+
 const checkDueDatesAndSendReminders = asyncHandler(async (req, res) => {
   const reminderDate = startOfDay(addDays(new Date(), 2));
 
@@ -144,4 +155,5 @@ export {
   getAllUsers,
   getAllBooks,
   checkDueDatesAndSendReminders,
+  getRequestApproval
 };

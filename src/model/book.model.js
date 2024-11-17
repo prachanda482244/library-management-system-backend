@@ -7,6 +7,7 @@ const bookSchema = new Schema({
     publicationYear: { type: Number, required: true },
     isbn: { type: String, required: true, unique: true },
     availability: { type: Boolean, default: true },
+    price:{type:Number,default:0},
     coverImage: { type: String },
     borrowedAt: { type: Date, default: null },
     borrowedBy: {
@@ -15,6 +16,11 @@ const bookSchema = new Schema({
         default: null,
     },
     dueDate: { type: Date, default: null },
+    borrowApprovalStatus: {
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "pending",
+    },
 }, {
     timestamps: true
 });

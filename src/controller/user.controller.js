@@ -207,11 +207,20 @@ const getCurrentUser = asyncHandler(async (req, res) => {
       },
     },
     {
+        $lookup:{
+          from:"orders",
+          foreignField:"_id",
+          localField:"orderHistory",
+          as:"orderDetails",  
+        }
+    },
+    {
       $project: {
         _id: 1,
         username: 1,
         email: 1,
         avatar: 1,
+        orderDetails:1,
         role: 1,
         fines: 1,
         createdAt: 1,
